@@ -175,6 +175,26 @@ describe("ResponseItemHistoryFallback", () => {
         expect(thoughtTexts(updates)).toEqual(["Need to inspect the directory."]);
     });
 
+    it("leaves user attachments to thread history", () => {
+        const updates = parseResponseItemHistoryFallback(jsonl([
+            {
+                type: "event_msg",
+                payload: {
+                    type: "user_message",
+                    message: "\n# Files mentioned by the user:\n\n## screenshot.png: /tmp/screenshot.png\n\n## My request for Codex:\nInspect the screenshot",
+                    images: [],
+                    local_images: ["/tmp/screenshot.png"],
+                },
+            },
+            functionCall("call-missing", "ls"),
+            functionCallOutput("call-missing", "Chunk ID: missing\nProcess exited with code 0\nOutput:\nREADME.md\n"),
+        ]), "terminal_output");
+
+        expect(messageTexts(updates, "user_message_chunk")).toEqual([
+            "Inspect the screenshot",
+        ]);
+    });
+
     it("preserves assistant message phase metadata from response items", () => {
         const updates = parseResponseItemHistoryFallback(jsonl([
             {
